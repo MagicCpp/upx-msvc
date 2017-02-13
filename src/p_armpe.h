@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -53,7 +53,7 @@ public:
                                          unsigned ih_codebase);
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               Reloc &rel, unsigned s1addr);
+                               unsigned s1addr);
     virtual void addNewRelocations(Reloc &, unsigned upxsection);
     virtual unsigned getProcessImportParam(unsigned upxsection);
     virtual void setOhDataBase(const pe_section_t *osection);

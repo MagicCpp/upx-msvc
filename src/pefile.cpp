@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -393,7 +393,7 @@ void PeFile32::processRelocs() // pass1
     for (ic = 1; ic <= 3; ic++)
     {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
-        unsigned prev = ~0;
+        unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
             if (fix[ic][kc] != prev)
@@ -491,7 +491,7 @@ void PeFile64::processRelocs() // pass1
     for (ic = 1; ic <= 15; ic++)
     {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
-        unsigned prev = ~0;
+        unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
             if (fix[ic][kc] != prev)
@@ -997,7 +997,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 unsigned len = strlen(ibuf + *tarr + 2) + 1;
                 memcpy(ppi,ibuf + *tarr + 2,len);
                 ppi += len;
-                names.add(*tarr,len + 2 + 1);
+                names.add(*tarr,len + 2);
             }
         ppi++;
 
@@ -1229,6 +1229,7 @@ struct PeFile::tls_traits<LE32>
     static const unsigned cb_size = 4;
     typedef unsigned cb_value_t;
     static const unsigned reloc_type = 3;
+    static const int tls_handler_offset_reloc = 4;
 };
 
 template <>
@@ -1246,6 +1247,7 @@ struct PeFile::tls_traits<LE64>
     static const unsigned cb_size = 8;
     typedef upx_uint64_t cb_value_t;
     static const unsigned reloc_type = 10;
+    static const int tls_handler_offset_reloc = -1;  // no need to relocate
 };
 
 template <typename LEXX>
@@ -1333,10 +1335,15 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
     typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
     const unsigned cb_size = tls_traits<LEXX>::cb_size;
     const unsigned reloc_type = tls_traits<LEXX>::reloc_type;
+    const int tls_handler_offset_reloc = tls_traits<LEXX>::tls_handler_offset_reloc;
 
     if (sotls == 0)
         return;
     // add new relocation entries
+
+    if __acc_cte(tls_handler_offset_reloc > 0)
+        rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
+
     unsigned ic;
     //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
     for (ic = 0; ic < (use_tls_callbacks ? 4 * cb_size : 3 * cb_size); ic += cb_size)
@@ -1484,7 +1491,7 @@ PeFile::Resource::Resource(const upx_byte *p,
 
 PeFile::Resource::~Resource()
 {
-    if (root) destroy (root,0);
+    if (root) { destroy(root, 0); root = NULL; }
 }
 
 unsigned PeFile::Resource::dirsize() const
@@ -1587,9 +1594,10 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
 {
     if (level == 3)
     {
-        const res_data *node = (const res_data *) rnode;
+        const res_data *node = ACC_STATIC_CAST(const res_data *, rnode);
         ibufcheck(node, sizeof(*node));
         upx_rleaf *leaf = new upx_rleaf;
+        leaf->id = 0;
         leaf->name = NULL;
         leaf->parent = parent;
         leaf->next = head;
@@ -1601,13 +1609,14 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
         return leaf;
     }
 
-    const res_dir *node = (const res_dir *) rnode;
+    const res_dir *node = ACC_STATIC_CAST(const res_dir *, rnode);
     ibufcheck(node, sizeof(*node));
     int ic = node->identr + node->namedentr;
     if (ic == 0)
         return NULL;
 
     upx_rbranch *branch = new upx_rbranch;
+    branch->id = 0;
     branch->name = NULL;
     branch->parent = parent;
     branch->nc = ic;
@@ -1696,17 +1705,21 @@ upx_byte *PeFile::Resource::build()
 void PeFile::Resource::destroy(upx_rnode *node,unsigned level)
 {
     xcheck(node);
-    delete [] node->name; node->name = NULL;
-    if (level != 3)
+    if (level == 3)
     {
-        upx_rbranch * const branch = (upx_rbranch *) node;
-        for (int ic = branch->nc; --ic >= 0; )
-            destroy(branch->children[ic],level + 1);
-        delete [] branch->children; branch->children = NULL;
-        delete static_cast<upx_rbranch *>(node);
+        upx_rleaf *leaf = ACC_STATIC_CAST(upx_rleaf *, node);
+        delete [] leaf->name; leaf->name = NULL;
+        delete leaf;
     }
     else
-        delete static_cast<upx_rleaf *>(node);
+    {
+        upx_rbranch *branch = ACC_STATIC_CAST(upx_rbranch *, node);
+        delete [] branch->name; branch->name = NULL;
+        for (int ic = branch->nc; --ic >= 0; )
+            destroy(branch->children[ic], level + 1);
+        delete [] branch->children; branch->children = NULL;
+        delete branch;
+    }
 }
 
 static void lame_print_unicode(const upx_byte *p)
@@ -1801,7 +1814,7 @@ static bool match(unsigned itype, const unsigned char *ntype,
     };
 
     // FIXME this comparison is not too exact
-    while (1)
+    for (;;)
     {
         char const *delim1 = strchr(keep, '/');
         char const *delim2 = strchr(keep, ',');
@@ -2328,6 +2341,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     // tls & loadconf are put into section 1
     ic = s1addr + s1size - sotls - soloadconf;
+
+    if (use_tls_callbacks)
+        tls_handler_offset = linker->getSymbolOffset("PETLSC2") + upxsection;
+
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
@@ -2370,7 +2387,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         callProcessResources(res, ic = res_start);
 
     defineSymbols(ncsection, upxsection, sizeof(oh),
-                  identsize - identsplit, rel, s1addr);
+                  identsize - identsplit, s1addr);
     defineFilterSymbols(&ft);
     relocateLoader();
     const unsigned lsize = getLoaderSize();

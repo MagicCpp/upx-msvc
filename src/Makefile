@@ -1,7 +1,7 @@
 #
 # UPX Makefile - needs GNU make 3.81 or better
 #
-# Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
 #
 
 # build configuration options for this Makefile
@@ -53,7 +53,6 @@ endif
 LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
-DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 ifeq ($(BUILD_TYPE_DEBUG),1)

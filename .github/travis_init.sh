@@ -19,10 +19,15 @@ unset CROSS C B T X
 
 # just in case, unset variable for passing extra UPX options
 export UPX=
+# un-export some vars
+declare +x UPX_AUTOMATIC_BUILDS_SSL_KEY UPX_AUTOMATIC_BUILDS_SSL_IV
 
 # compatibility wrappers
 if [[ $TRAVIS_OS_NAME == osx ]]; then
 # use GNU coreutils ("brew install coreutils")
+date() {
+    gdate "$@"
+}
 readlink() {
     greadlink "$@"
 }
@@ -31,7 +36,9 @@ sha256sum() {
 }
 fi
 if [[ -n $APPVEYOR_JOB_ID ]]; then
-# for some reason this is needed for bash on AppVeyor
+openssl() {
+    /usr/bin/openssl "$@"
+}
 sort() {
     /usr/bin/sort "$@"
 }
@@ -43,63 +50,105 @@ CC=false CXX=false SCAN_BUILD=false
 AR=ar SIZE=size
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     BUILD_LOCAL_ZLIB=1
+    if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
+        export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
+    fi
     upx_exeext=.exe
     # dir c:\cygwin
     case $BM_C in
         gcc-m32 | gcc-4.9-m32)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
             x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
         gcc-m64 | gcc-4.9-m64)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
             x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         msvc | msvc-*)
             AR="link -lib"; CC="cl"; CXX="cl" ;; # standard system compiler
     esac
 fi # APPVEYOR_JOB_ID
-if [[ -n $TRAVIS_JOB_ID ]]; then # TODO: should check for Ubuntu and not for Travis
 if [[ -n $BM_CROSS ]]; then
     BUILD_LOCAL_ZLIB=1
-    case $BM_CROSS-$BM_C in
-        arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L/usr/arm-linux-gnueabi"
-            x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
-        arm-linux-gnueabihf-gcc | arm-linux-gnueabihf-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L/usr/arm-linux-gnueabihf"
-            x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
-        i[36]86-w64-mingw32-gcc | i[36]86-w64-mingw32-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_wine ]] && upx_wine="wine"
-            x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
-        x86_64-w64-mingw32-gcc | x86_64-w64-mingw32-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_wine ]] && upx_wine="wine"
-            x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
-    esac
-fi
-fi # TRAVIS_JOB_ID
+    if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
+        export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
+    fi
+    cat /etc/os-release || true
+    if egrep -q '^PRETTY_NAME="?Ubuntu .*12\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabi"
+                x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
+            arm-linux-gnueabihf-gcc | arm-linux-gnueabihf-gcc-4.6)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
+                x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
+            i[36]86-w64-mingw32-gcc | i[36]86-w64-mingw32-gcc-4.6)
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
+            x86_64-w64-mingw32-gcc | x86_64-w64-mingw32-gcc-4.6)
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
+    elif egrep -q '^PRETTY_NAME="?Ubuntu 16\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            aarch64-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-aarch64 -L /usr/aarch64-linux-gnu"
+                x=aarch64-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            arm-linux-gnueabi-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabi"
+                x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            arm-linux-gnueabihf-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
+                x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            i[36]86-w64-mingw32-gcc-5)
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
+            mips-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-mips -L /usr/mips-linux-gnu"
+                x=mips-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            mipsel-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-mipsel -L /usr/mipsel-linux-gnu"
+                x=mipsel-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc -L /usr/powerpc-linux-gnu"
+                x=powerpc-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc64-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc64 -L /usr/powerpc64-linux-gnu"
+                x=powerpc64-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc64le-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc64le -L /usr/powerpc64le-linux-gnu"
+                x=powerpc64le-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            s390x-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-s390x -L /usr/s390x-linux-gnu"
+                x=s390x-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            x86_64-w64-mingw32-gcc-5)
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
+    fi
+fi # BM_CROSS
 if [[ "$CC" == "false" ]]; then # generic
 if [[ -z $BM_CROSS ]]; then
     case $BM_C in
         clang | clang-m?? | clang-3.4-m?? | clang-[678][0-9][0-9]-m??)
             CC="clang"; CXX="clang++" ;; # standard system compiler
-        clang-[34].[0-9]-m??)
+        clang-[3].[0-9]-m??)
             v=${BM_C:6:3}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
-        gcc | gcc-m??)
+        gcc | gcc-m?? | gcc-mx32)
             CC="gcc"; CXX="g++" ;; # standard system compiler
-        gcc-[34].[0-9]-m??)
+        gcc-[34].[0-9]-m?? | gcc-[34].[0-9]-mx32)
             v=${BM_C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
-        gcc-[56]-m?? | gcc-[56].[0-9]-m??)
+        gcc-[56]-m?? | gcc-[56]-mx32)
             v=${BM_C:4:1}; CC="gcc-$v"; CXX="g++-$v" ;;
     esac
 fi
 fi # generic
 case $BM_C in
-    clang*-m32) CC="$CC -m32"; CXX="$CXX -m32" ;;
-    clang*-m64) CC="$CC -m64"; CXX="$CXX -m64" ;;
-    gcc*-m32)   CC="$CC -m32"; CXX="$CXX -m32" ;;
-    gcc*-m64)   CC="$CC -m64"; CXX="$CXX -m64" ;;
+    clang*-m32) CC="$CC -m32";  CXX="$CXX -m32" ;;
+    clang*-m64) CC="$CC -m64";  CXX="$CXX -m64" ;;
+    gcc*-m32)   CC="$CC -m32";  CXX="$CXX -m32" ;;
+    gcc*-m64)   CC="$CC -m64";  CXX="$CXX -m64" ;;
+    gcc*-mx32)  CC="$CC -mx32"; CXX="$CXX -mx32" ;;
 esac
 if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
     CC="$CC -std=gnu89"
@@ -136,7 +185,7 @@ if [[ -z $toptop_builddir ]]; then
     unset d subdir dd
 fi
 [[ -z $toptop_builddir ]] && toptop_builddir=$(readlink -mn -- ./build)
-[[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/$BM_C/$BM_B")
+[[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/${BM_CROSS:+$BM_CROSS-}$BM_C/$BM_B")
 [[ -z $upx_BUILDDIR ]] && upx_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx")
 [[ -z $ucl_BUILDDIR ]] && ucl_BUILDDIR=$(readlink -mn -- "$toptop_bdir/ucl-1.03")
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx-testsuite")

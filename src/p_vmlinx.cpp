@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2004-2016 John Reiser
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 2004-2017 John Reiser
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -957,8 +957,8 @@ static const
 #include "stub/powerpc-linux.kernel.vmlinux-head.h"
 
 unsigned PackVmlinuxI386::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // COMPRESSED_LENGTH
@@ -972,8 +972,8 @@ unsigned PackVmlinuxI386::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxAMD64::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // COMPRESSED_LENGTH
@@ -1038,8 +1038,8 @@ void PackVmlinuxAMD64::defineDecompressorSymbols()
 }
 
 unsigned PackVmlinuxARMEL::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // First word from vmlinux-head.S
@@ -1060,8 +1060,8 @@ unsigned PackVmlinuxARMEL::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxARMEB::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // First word from vmlinux-head.S
@@ -1082,8 +1082,8 @@ unsigned PackVmlinuxARMEB::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxPPC32::write_vmlinux_head(
-    OutputFile * /*const fo*/,
-    Shdr * /*const stxt*/
+    OutputFile * /*fo*/,
+    Shdr * /*stxt*/
 )
 {
     return 0;

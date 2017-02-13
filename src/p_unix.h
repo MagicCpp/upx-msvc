@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -188,30 +188,6 @@ protected:
         LE32 p_blocksize;
     __packed_struct_end()
 };
-
-
-/*************************************************************************
-// solaris/sparc
-**************************************************************************/
-
-#if 0
-class PackSolarisSparc : public PackUnixBe32
-{
-    typedef PackUnixBe32 super;
-public:
-    PackSolarisSparc(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_SOLARIS_SPARC; }
-    virtual const char *getName() const { return "solaris/sparc"; }
-
-    virtual bool canPack();
-
-protected:
-    virtual upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
-
-    virtual void patchLoader();
-};
-#endif /* #if 0 */
 
 
 #endif /* already included */

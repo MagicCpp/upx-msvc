@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -34,6 +34,7 @@
 #if !defined(_FILE_OFFSET_BITS)
 #  define _FILE_OFFSET_BITS 64
 #endif
+#undef NDEBUG
 
 
 /*************************************************************************
@@ -43,6 +44,8 @@
 #ifndef ACC_CFG_USE_NEW_STYLE_CASTS
 #define ACC_CFG_USE_NEW_STYLE_CASTS 1
 #endif
+#define ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T ACC_TYPEOF_INT
+#define ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T ACC_TYPEOF_LONG_LONG
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
    // other compilers may work, but we're NOT interested into supporting them
@@ -59,7 +62,13 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
 #if (ACC_CC_MSC)
+#  pragma warning(error: 4127)
+#  pragma warning(error: 4146)
 #  pragma warning(error: 4319)
+#  pragma warning(error: 4805)
+#  pragma warning(disable: 4244) // -Wconversion
+#  pragma warning(disable: 4267) // -Wconversion
+#  pragma warning(disable: 4820) // padding added after data member
 #endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
@@ -69,7 +78,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  undef HAVE_LSTAT
 #  undef HAVE_UTIME
 #endif
-
 
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
@@ -110,29 +118,20 @@ typedef unsigned char   upx_byte;
 #undef _
 #undef __
 #undef ___
-#undef NDEBUG
 #undef dos
 #undef linux
 #undef small
 #undef tos
+#undef unix
 #if defined(__DJGPP__)
 #  undef sopen
 #  undef __unix__
 #  undef __unix
 #endif
 
+#define WITH_LZMA 0x443
 #define WITH_UCL 1
 #define WITH_ZLIB 1
-#if !defined(WITH_LZMA) || (WITH_LZMA+0 == 0)
-#  error "WITH_LZMA is missing"
-#elif (WITH_LZMA != 0x443)
-#  error "invalid WITH_LZMA version"
-#endif
-#if defined(UPX_OFFICIAL_BUILD)
-#  if !(WITH_LZMA && WITH_NRV && WITH_UCL && WITH_ZLIB)
-#    error
-#  endif
-#endif
 #if (WITH_UCL)
 #  define ucl_compress_config_t REAL_ucl_compress_config_t
 #  include <ucl/uclconf.h>
@@ -143,11 +142,6 @@ typedef unsigned char   upx_byte;
 #  undef ucl_compress_config_t
 #  undef ucl_compress_config_p
 #endif
-
-
-/*************************************************************************
-// system includes
-**************************************************************************/
 
 // malloc debuggers
 #if (WITH_VALGRIND)
@@ -162,7 +156,6 @@ typedef unsigned char   upx_byte;
 #if !defined(VALGRIND_MAKE_MEM_UNDEFINED)
 #  define VALGRIND_MAKE_MEM_UNDEFINED(addr,len) 0
 #endif
-
 
 // IMPORTANT: unconditionally enable assertions
 #undef NDEBUG
@@ -190,14 +183,12 @@ typedef size_t upx_rsize_t;
 #  define STDERR_FILENO     (fileno(stderr))
 #endif
 
-
 #if !(HAVE_STRCASECMP) && (HAVE_STRICMP)
 #  define strcasecmp        stricmp
 #endif
 #if !(HAVE_STRNCASECMP) && (HAVE_STRNICMP)
 #  define strncasecmp       strnicmp
 #endif
-
 
 #if !defined(S_IWUSR) && defined(_S_IWUSR)
 #  define S_IWUSR           _S_IWUSR
@@ -237,7 +228,6 @@ typedef size_t upx_rsize_t;
 #    define S_ISCHR(m)      (((m) & S_IFMT) == S_IFCHR)
 #  endif
 #endif
-
 
 // avoid warnings about shadowing global functions
 #undef index
@@ -371,18 +361,18 @@ private:
 #define UPX_F_DOS_EXE           3
 #define UPX_F_DJGPP2_COFF       4
 #define UPX_F_WATCOM_LE         5
-#define UPX_F_VXD_LE            6
-#define UPX_F_DOS_EXEH          7               /* OBSOLETE */
+#define UPX_F_VXD_LE            6               // NOT IMPLEMENTED
+#define UPX_F_DOS_EXEH          7               // OBSOLETE
 #define UPX_F_TMT_ADAM          8
 #define UPX_F_WIN32_PE          9
 #define UPX_F_LINUX_i386        10
-#define UPX_F_WIN16_NE          11
+#define UPX_F_WIN16_NE          11              // NOT IMPLEMENTED
 #define UPX_F_LINUX_ELF_i386    12
-#define UPX_F_LINUX_SEP_i386    13
+#define UPX_F_LINUX_SEP_i386    13              // NOT IMPLEMENTED
 #define UPX_F_LINUX_SH_i386     14
 #define UPX_F_VMLINUZ_i386      15
 #define UPX_F_BVMLINUZ_i386     16
-#define UPX_F_ELKS_8086         17
+#define UPX_F_ELKS_8086         17              // NOT IMPLEMENTED
 #define UPX_F_PS1_EXE           18
 #define UPX_F_VMLINUX_i386      19
 #define UPX_F_LINUX_ELFI_i386   20
@@ -413,10 +403,8 @@ private:
 #define UPX_F_VMLINUX_PPC64LE   40
 #define UPX_F_DYLIB_PPC64LE     41
 
-#define UPX_F_PLAIN_TEXT        127             // FIXME: what is this ??
-
 #define UPX_F_ATARI_TOS         129
-#define UPX_F_SOLARIS_SPARC     130
+#define UPX_F_SOLARIS_SPARC     130             // NOT IMPLEMENTED
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
 #define UPX_F_LINUX_ELF32_ARMEB 133

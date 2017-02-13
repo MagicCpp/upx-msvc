@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -40,15 +40,12 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
-//#include "p_lx_sep.h"
 #include "p_lx_sh.h"
 #include "p_lx_interp.h"
 #include "p_sys.h"
 #include "p_tos.h"
 #include "p_wcle.h"
 #include "p_tmt.h"
-#include "p_vxd.h"
-#include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_w64pep.h"
 #include "p_vmlinz.h"
@@ -170,16 +167,6 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         if ((p = func(new PackWcle(f), user)) != NULL)
             return p;
         delete p; p = NULL;
-#if 0
-        if ((p = func(new PackVxd(f), user)) != NULL)
-            return p;
-        delete p; p = NULL;
-#endif
-#if 0
-        if ((p = func(new PackW16Ne(f), user)) != NULL)
-            return p;
-        delete p; p = NULL;
-#endif
         if ((p = func(new PackW64Pep(f), user)) != NULL)
             return p;
         delete p; p = NULL;
@@ -231,25 +218,12 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if ((p = func(new PackVmlinuzARMEL(f), user)) != NULL)
         return p;
     delete p; p = NULL;
-#if 0
-    if ((p = func(new PackElks8086(f), user)) != NULL)
-        return p;
-    delete p; p = NULL;
-#endif
 
     //
     // linux
     //
     if (!o->o_unix.force_execve)
     {
-#if 0
-        if (o->unix.script_name)
-        {
-            if ((p = func(new PackLinuxI386sep(f), user)) != NULL)
-                return p;
-            delete p; p = NULL;
-        }
-#endif
         if (o->o_unix.use_ptinterp) {
             if ((p = func(new PackLinuxElf32x86interp(f), user)) != NULL)
                 return p;

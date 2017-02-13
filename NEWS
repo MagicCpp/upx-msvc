@@ -2,7 +2,11 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.92 (04 Dec 2016):
+Changes in 3.93 (29 Jan 2017):
+  * UPX has moved to GitHub - the new home page is https://upx.github.io
+  * fixed some win32/pe and win64/pe regressions introduced in 3.92
+
+Changes in 3.92 (11 Dec 2016):
   * UPX has moved to GitHub - the new home page is https://upx.github.io
   * IMPORTANT: all PE formats: internal changes: reunited the diverged source
     files - please report all regressions into the bug tracker and try UPX 3.91

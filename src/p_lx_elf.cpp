@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
-   Copyright (C) 2000-2016 John F. Reiser
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 2000-2017 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -516,7 +516,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 void
 PackLinuxElf::addStubEntrySections(Filter const *)
 {
-    int all_pages = opt->o_unix.unmap_all_pages | is_big;
+    bool all_pages = opt->o_unix.unmap_all_pages | is_big;
     addLoader("ELFMAINX", NULL);
     if (hasLoaderSection("ELFMAINXu")) {
             // brk() trouble if static
@@ -3373,7 +3373,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
     bool const is_shlib = 0;  // XXX: THIS IS BROKEN; see 32-bit ::unpack
-    if (is_shlib
+    if __acc_cte(is_shlib
     ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
             < up4(file_size)) {
@@ -3582,7 +3582,7 @@ Linker* PackLinuxElf32armBe::newLinker() const
 }
 
 unsigned
-PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
+PackLinuxElf32::elf_get_offset_from_address(unsigned addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -3596,7 +3596,7 @@ PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
 }
 
 Elf32_Dyn const *
-PackLinuxElf32::elf_has_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_has_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3607,7 +3607,7 @@ PackLinuxElf32::elf_has_dynamic(unsigned int const key) const
 }
 
 void const *
-PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_find_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3622,7 +3622,7 @@ PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3633,7 +3633,7 @@ PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t const addr) const
+PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t addr) const
 {
     Elf64_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -3647,7 +3647,7 @@ PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t const addr) const
 }
 
 Elf64_Dyn const *
-PackLinuxElf64::elf_has_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_has_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3658,7 +3658,7 @@ PackLinuxElf64::elf_has_dynamic(unsigned int const key) const
 }
 
 void const *
-PackLinuxElf64::elf_find_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_find_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3673,7 +3673,7 @@ PackLinuxElf64::elf_find_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf64::elf_unsigned_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)

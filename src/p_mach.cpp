@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2004-2016 John Reiser
+   Copyright (C) 2004-2017 John Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -563,12 +563,11 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 template <class T>
 void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
-    Mach_main_command cmdMAIN;
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
         + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(cmdMAIN)
+        + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(Mach_main_command)
         + sizeof(Mach_dyld_info_only_command) + sizeof(Mach_dysymtab_command)
         + sizeof(Mach_load_dylinker_command) + sizeof(Mach_load_dylib_command)
         + sizeof(Mach_function_starts_command) + sizeof(Mach_data_in_code_command)
@@ -1070,8 +1069,8 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     len += sizeof(disp);
 
     char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
-    fo->write(page, ~PAGE_MASK & -len);
-    len += ~PAGE_MASK & -len;
+    fo->write(page, ~PAGE_MASK & (0u - len));
+    len += ~PAGE_MASK & (0u - len);
     segLINK.fileoff = len;
 
     threado_setPC(len + segTEXT.vmaddr);  /* entry address */
@@ -1366,7 +1365,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
-        mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
+        COMPILE_TIME_ASSERT(sizeof(mhdro.flags) == sizeof(unsigned))
+        mhdro.flags &= ~ (unsigned) Mach_header::MH_PIE;  // we require fixed address
         mhdro.flags |= Mach_header::MH_BINDATLOAD;  // DT_BIND_NOW
     }
     unsigned pos = sizeof(mhdro);
@@ -1377,7 +1377,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segZERO.cmdsize = sizeof(segZERO);
     strncpy((char *)segZERO.segname, "__PAGEZERO", sizeof(segZERO.segname));
     segZERO.vmsize = PAGE_SIZE;
-    if (sizeof(segZERO.vmsize) == 8
+    if __acc_cte(sizeof(segZERO.vmsize) == 8
     && mhdro.filetype == Mach_header::MH_EXECUTE
     && mhdro.cputype == Mach_header::CPU_TYPE_X86_64) {
         segZERO.vmsize <<= 20;  // (1ul<<32)
@@ -1716,7 +1716,7 @@ int PackMachBase<T>::canUnpack()
             // Emulate the code
             if (0xe8==b[0] && disp < bufsize
             &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
-                unsigned disp2 = - *(TE32 const *)&b[7+disp];
+                unsigned disp2 = 0u - *(TE32 const *)&b[7+disp];
                 if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
                     struct b_info const *bptr = (struct b_info const *)&b[11+disp];
                     // This is the folded stub.

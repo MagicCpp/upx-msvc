@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -339,9 +339,9 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     };
     PROPVARIANT pr[8];
     const unsigned nprops = 8;
-    static wchar_t matchfinder[] = L"BT4";
+    static const wchar_t matchfinder[] = L"BT4";
     assert(NCompress::NLZMA::FindMatchFinder(matchfinder) >= 0);
-    pr[7].vt = VT_BSTR; pr[7].bstrVal = matchfinder;
+    pr[7].vt = VT_BSTR; pr[7].bstrVal = ACC_PCAST(BSTR, ACC_UNCONST_CAST(wchar_t *, matchfinder));
     pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
     if (prepare(res, src_len, method, level, lcconf) != 0)

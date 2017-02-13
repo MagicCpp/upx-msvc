@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -32,10 +32,15 @@
 
 __packed_struct(Mach_fat_header)
     BE32 magic;
+# if 0
         enum {  // note conflict with java bytecode PackLinuxI386
             FAT_MAGIC      = 0xcafebabe,
             FAT_MAGIC_SWAB = 0xbebafeca
         };
+# else
+        static const unsigned FAT_MAGIC      = 0xcafebabe;
+        static const unsigned FAT_MAGIC_SWAB = 0xbebafeca;
+# endif
     BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
 __packed_struct_end()
 

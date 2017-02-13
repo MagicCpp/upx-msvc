@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -122,34 +122,6 @@ protected:
 
 
 /*************************************************************************
-// elks/8086 (linux-8086 uncompressed kernel image)
-**************************************************************************/
-
-class PackElks8086 : public PackVmlinuzI386
-{
-    typedef PackVmlinuzI386 super;
-public:
-    PackElks8086(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_ELKS_8086; }
-    virtual const char *getName() const { return "elks/i086"; }
-    virtual const char *getFullName(const options_t *) const { return "i086-elks ???"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
-
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
-
-    virtual int canUnpack();
-
-protected:
-    virtual int decompressKernel();
-    virtual void readKernel();
-
-    virtual void buildLoader(const Filter *ft);
-};
-
-
-/*************************************************************************
 // vmlinuz/armel (gzip compressed Linux kernel image)
 **************************************************************************/
 
@@ -178,7 +150,7 @@ protected:
     virtual void readKernel();
 
     virtual void buildLoader(const Filter *ft);
-    virtual unsigned write_vmlinuz_head(OutputFile *const fo);
+    virtual unsigned write_vmlinuz_head(OutputFile *fo);
     virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
 

@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2016 Laszlo Molnar
-   Copyright (C) 2000-2016 John F. Reiser
+   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 2000-2017 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -81,7 +81,7 @@ protected:
     unsigned sz_pack2a;  // after pack2() of all PT_LOAD
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
-    unsigned is_big;  // stub style: must use area above the brk
+    bool is_big;  // stub style: must use area above the brk
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
     upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
@@ -147,7 +147,7 @@ protected:
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
-    upx_uint64_t elf_unsigned_dynamic(unsigned) const;
+    virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -264,7 +264,7 @@ protected:
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
-    upx_uint64_t elf_unsigned_dynamic(unsigned) const;
+    virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
