@@ -78,9 +78,6 @@
     <ClCompile Include="..\src\p_djgpp2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p_elks.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\p_exe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -118,9 +115,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\p_vmlinz.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p_w16ne.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\p_w32pe.cpp">

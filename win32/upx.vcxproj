@@ -181,7 +181,6 @@
     <ClCompile Include="..\src\p_armpe.cpp" />
     <ClCompile Include="..\src\p_com.cpp" />
     <ClCompile Include="..\src\p_djgpp2.cpp" />
-    <ClCompile Include="..\src\p_elks.cpp" />
     <ClCompile Include="..\src\p_exe.cpp" />
     <ClCompile Include="..\src\p_lx_elf.cpp" />
     <ClCompile Include="..\src\p_lx_exc.cpp" />
@@ -195,7 +194,6 @@
     <ClCompile Include="..\src\p_unix.cpp" />
     <ClCompile Include="..\src\p_vmlinx.cpp" />
     <ClCompile Include="..\src\p_vmlinz.cpp" />
-    <ClCompile Include="..\src\p_w16ne.cpp" />
     <ClCompile Include="..\src\p_w32pe.cpp" />
     <ClCompile Include="..\src\p_w64pep.cpp" />
     <ClCompile Include="..\src\p_wcle.cpp" />
